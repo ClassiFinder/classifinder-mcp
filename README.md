@@ -44,7 +44,30 @@ Add to `.cursor/mcp.json` in your project:
 }
 ```
 
-## Tools
+### Self-hosted server
+
+To keep scanned text inside your network, run the open-source scanner yourself ([classifinder.ai/self-host](https://classifinder.ai/self-host)) and point the MCP server at it with `CLASSIFINDER_BASE_URL`. Use one of the keys you set in `CLASSIFINDER_API_KEYS` on the server:
+
+```bash
+docker run -d -p 8000:8000 -e CLASSIFINDER_API_KEYS=change-me ghcr.io/classifinder/classifinder:latest
+```
+
+```json
+{
+  "mcpServers": {
+    "classifinder": {
+      "command": "classifinder-mcp",
+      "env": {
+        "CLASSIFINDER_BASE_URL": "http://localhost:8000",
+        "CLASSIFINDER_API_KEY": "change-me"
+      }
+    }
+  }
+}
+```
+
+The same `env` block works in Claude Code, Claude Desktop, and Cursor. Leave `CLASSIFINDER_BASE_URL` unset to use the hosted API.
+
 
 ### `classifinder_scan`
 
@@ -77,7 +100,7 @@ One scan returns both secret findings and injection markers — no second vendor
 
 ## Hardening — Sandbox Profiles
 
-The MCP server is intentionally minimal: ~180 lines, two read-only tools, a single egress destination (`api.classifinder.ai:443`), and the API key as the only secret in scope. That makes it cheap to run under a sandbox. Three documented profiles:
+The MCP server is intentionally minimal: ~180 lines, two read-only tools, a single egress destination (`api.classifinder.ai:443`, or your own server when `CLASSIFINDER_BASE_URL` is set), and the API key as the only secret in scope. That makes it cheap to run under a sandbox. Three documented profiles:
 
 ### Docker
 
@@ -94,6 +117,7 @@ docker run --rm -i \
 - `--tmpfs /tmp` — writable scratch space for pip / Python
 - `-v ~/.classifinder:/root/.classifinder` — only persistent mount, used for the audit log
 - `-e CLASSIFINDER_API_KEY` — key passed via env, never written to disk
+- Self-hosted: add `-e CLASSIFINDER_BASE_URL=http://host.docker.internal:8000` (or your server's in-network address)
 - `-i` — keeps stdin attached (MCP transport is stdio)
 
 For a faster invocation in production, build a thin image with `classifinder-mcp` pre-installed.

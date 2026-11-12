@@ -56,11 +56,14 @@ def _get_client() -> ClassiFinder:
     if not api_key:
         raise RuntimeError(
             "CLASSIFINDER_API_KEY environment variable is not set. "
-            "Get a free key at https://classifinder.ai"
+            "Get a free key at https://classifinder.ai, or set it to a key from "
+            "CLASSIFINDER_API_KEYS on your self-hosted server."
         )
 
     from classifinder import ClassiFinder as _ClassiFinder
 
+    # base_url is left to the SDK: CLASSIFINDER_BASE_URL (self-hosted server)
+    # if set, else the hosted API.
     _client = _ClassiFinder(api_key=api_key)
     return _client
 

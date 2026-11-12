@@ -46,6 +46,36 @@ def test_get_client_returns_instance(monkeypatch):
     server_mod._client = None  # reset
 
 
+def test_get_client_honors_base_url_env(monkeypatch):
+    """CLASSIFINDER_BASE_URL (self-hosted server) reaches the SDK client."""
+    import classifinder_mcp.server as server_mod
+
+    server_mod._client = None
+    monkeypatch.setenv("CLASSIFINDER_API_KEY", "ss_test_abc123")
+    monkeypatch.setenv("CLASSIFINDER_BASE_URL", "http://localhost:8000/")
+    try:
+        client = _get_client()
+        assert client._base_url == "http://localhost:8000"
+    finally:
+        client.close()
+        server_mod._client = None
+
+
+def test_get_client_defaults_to_hosted_api(monkeypatch):
+    """Without CLASSIFINDER_BASE_URL the client targets the hosted API."""
+    import classifinder_mcp.server as server_mod
+
+    server_mod._client = None
+    monkeypatch.setenv("CLASSIFINDER_API_KEY", "ss_test_abc123")
+    monkeypatch.delenv("CLASSIFINDER_BASE_URL", raising=False)
+    try:
+        client = _get_client()
+        assert client._base_url == "https://api.classifinder.ai"
+    finally:
+        client.close()
+        server_mod._client = None
+
+
 def test_get_client_caches_instance(monkeypatch):
     """Repeated calls should return the same client object."""
     import classifinder_mcp.server as server_mod
